@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Login</title>
+</head>
+<body>
+    
+    <button id = "googlelogin">구글 아이디 로그인</button>
+    
+    <form>
+        핸드폰 번호: <input id="phoneNumber"/>
+        <button it ="phoneNumberButton">핸드폰 번호 전송</button>
+    </form>
+
+
+    <form>
+        확인 코드: <input  />
+        <button>확인 번호 전송</button>
+    </form>
+
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
+        //구글꺼 가져오기
+        import {getAuth, signInWithPopup, GoogleAuthProvider, signInWithPhoneNumber, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js"; 
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+      
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+          apiKey: "AIzaSyBv-SMXQJQFzZBzeV1VAHlKHNgavllfgpY",
+          authDomain: "easylogin-45092.firebaseapp.com",
+          projectId: "easylogin-45092",
+          storageBucket: "easylogin-45092.appspot.com",
+          messagingSenderId: "860489615563",
+          appId: "1:860489615563:web:84bb725b1dcf069ea1334e",
+          measurementId: "G-GPV9N6JP2F"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        //구글 인증
+        
+        const provider = new GoogleAuthProvider();
+
+        const auth = getAuth();
+        auth.languageCode = 'ko';
+
+        //click 이벤트 있을시 다음과 같은 함수를 실행
+        document.getElementById('googlelogin').addEventListener('click', ()=>{
+            console.log('google login click')
+
+            signInWithPopup(auth, provider)
+            .then((result) => {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                const token = credential.accessToken;
+                // The signed-in user info.
+                const user = result.user;
+                console.log(result);
+                // IdP data available using getAdditionalUserInfo(result)
+                // ...
+            }).catch((error) => {
+                // Handle Errors here.
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                // The email of the user's account used.
+                const email = error.customData.email;
+                // The AuthCredential type that was used.
+                const credential = GoogleAuthProvider.credentialFromError(error);
+                // ...
+                //도메인 승인 없다면 에러존재
+                console.log('error')
+            });
+        })
+        
+        window.recaptchaVerifier = new RecaptchaVerifier('phoneNumberButton', {
+            'size': 'invisible',
+            'callback': (response) => {
+              // reCAPTCHA solved, allow signInWithPhoneNumber.
+              onSignInSubmit();
+            }
+          }, auth);
+        
+            document.getElementById('phoneNumberButton').addEventListener('click',(event)=> {
+            event.preventDefault();
+            
+            const phoneNumber = document.getElementById('phoneNumber').value
+            const appVerifier = window.recaptchaVerifier;
+
+            signInWithPhoneNumber(auth, '+82'+phoneNumber, appVerifier)
+                .then((confirmationResult) => {
+            // SMS sent. Prompt user to type the code from the message, then sign the
+            // user in with confirmationResult.confirm(code).
+                window.confirmationResult = confirmationResult;
+                console.log(confirmationResult)
+                // ...
+                }).catch((error) => {
+                console.log(error)
+                // Error; SMS not sent
+                // ...
+                });
+            })
+
+      </script>
+</body>
+
+</html>
