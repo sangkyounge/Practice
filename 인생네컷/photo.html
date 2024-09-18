@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>저장 기능이 추가된 인생네컷</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #app {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        #camera-feed {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 10px;
+        }
+        .frame {
+            width: 600px;
+            height: 800px;
+            background-color: #e6e6fa;
+            border: 2px solid #9370db;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+        .photo-row {
+            display: flex;
+            height: 47%;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .photo-slot {
+            flex: 1;
+            background-color: white;
+            border: 1px solid #9370db;
+            overflow: hidden;
+        }
+        .photo-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .text {
+            text-align: center;
+            font-size: 30px;
+            font-weight: bold;
+            color: #4b0082;
+            margin-top: 15px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <video id="camera-feed" autoplay></video>
+        <button id="capture-btn">사진 촬영</button>
+        <button id="save-btn" disabled>저장하기</button>
+        <div class="frame">
+            <div class="photo-row">
+                <div class="photo-slot"><img id="photo1"></div>
+                <div class="photo-slot"><img id="photo2"></div>
+            </div>
+            <div class="photo-row">
+                <div class="photo-slot"><img id="photo3"></div>
+                <div class="photo-slot"><img id="photo4"></div>
+            </div>
+            <div class="text">인생네컷</div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('camera-feed');
+        const captureBtn = document.getElementById('capture-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const frame = document.querySelector('.frame');
+        const photos = [
+            document.getElementById('photo1'),
+            document.getElementById('photo2'),
+            document.getElementById('photo3'),
+            document.getElementById('photo4')
+        ];
+        let photoCount = 0;
+
+        async function setupCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 600, height: 800 } });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("카메라 접근 오류:", err);
+                alert("카메라 접근에 실패했습니다. 카메라 권한을 확인해주세요.");
+            }
+        }
+
+        function capturePhoto() {
+            if (photoCount >= 4) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            photos[photoCount].src = canvas.toDataURL('image/jpeg');
+            
+            photoCount++;
+            
+            if (photoCount >= 4) {
+                captureBtn.disabled = true;
+                captureBtn.textContent = '촬영 완료';
+                saveBtn.disabled = false;
+            }
+        }
+
+        function saveFrame() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = frame.offsetWidth;
+            canvas.height = frame.offsetHeight;
+
+            // 프레임 배경 그리기
+            ctx.fillStyle = '#e6e6fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 사진 그리기
+            photos.forEach((photo, index) => {
+                const x = index % 2 === 0 ? 15 : canvas.width / 2 + 7.5;
+                const y = index < 2 ? 15 : canvas.height / 2 + 7.5;
+                ctx.drawImage(photo, x, y, canvas.width / 2 - 22.5, canvas.height / 2 - 22.5);
+            });
+
+            // 텍스트 그리기
+            ctx.font = 'bold 30px Arial';
+            ctx.fillStyle = '#4b0082';
+            ctx.textAlign = 'center';
+            ctx.fillText('인생네컷', canvas.width / 2, canvas.height - 20);
+
+            // 이미지 저장
+            const link = document.createElement('a');
+            link.download = 'life4cut.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        captureBtn.addEventListener('click', capturePhoto);
+        saveBtn.addEventListener('click', saveFrame);
+        setupCamera();
+    </script>
+</body>
+</html>
